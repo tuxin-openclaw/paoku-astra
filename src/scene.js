@@ -65,7 +65,9 @@ export function createScene(container) {
   ball(body, 0xe9bf62, [0, .79, -.7], [.075, .085, .035]);
 
   const chunks = [];
-  const ceilings = [];
+  // Keep overhead scenery stationary and seamless so it never sweeps across the chase camera.
+  const ceiling = box(scene, 0xe9e8d8, [0, 7.2, -60], [17.2, .12, 180]);
+  ceiling.castShadow = false;
   function plant(parent, x, z, size = 1) {
     const p = new THREE.Group(); p.position.set(x, 0, z); p.scale.setScalar(size); parent.add(p);
     cylinder(p, 0xe1c8a7, [0, .37, 0], [.37, .7, .37]); cylinder(p, 0x4d4235, [0, .74, 0], [.31, .02, .31]);
@@ -90,25 +92,22 @@ export function createScene(container) {
   }
   for (let i = 0; i < 10; i++) {
     const chunk = new THREE.Group(); scene.add(chunk); chunks.push(chunk);
-    const ceiling = box(chunk, 0xe9e8d8, [0, 6.67, 0], [17.2, .12, 14]); ceiling.castShadow = false; ceilings.push(ceiling);
     box(chunk, 0xd4cbbb, [0, -.18, 0], [18, .3, 14]);
     box(chunk, 0x789186, [0, -.013, 0], [7.25, .03, 14]);
     for (const x of [-3.57, 3.57]) box(chunk, 0xc7c6a7, [x, .009, 0], [.08, .02, 14]);
     for (const x of [-1.075, 1.075]) for (let z = -6; z < 7; z += 3.5) box(chunk, 0x9eafa0, [x, .012, z], [.035, .02, 1.1]);
     for (const side of [-1, 1]) {
       desk(chunk, side, -3); plant(chunk, side * 4.8, 3.8, 1.25);
-      box(chunk, 0xe7e6d6, [side * 8.65, 3, 0], [.2, 6, 14]);
+      box(chunk, 0xe7e6d6, [side * 8.65, 3.6, 0], [.2, 7.2, 14]);
       box(chunk, 0xb0c9c2, [side * 8.5, 3.6, -.2], [.09, 3.7, 10.8]);
       for (const z of [-5.7, -.2, 5.2]) box(chunk, 0xf0eedd, [side * 8.4, 3.6, z], [.15, 3.9, .09]);
       box(chunk, 0xf0eedd, [side * 8.4, 2.5, -.2], [.15, .07, 11]);
       box(chunk, 0xb2b6a6, [side * 8.4, .35, 0], [.25, .6, 14]);
-      box(chunk, 0xc3c6b4, [side * 7.9, 3.2, 6.7], [.65, 6.4, .5]);
+      box(chunk, 0xc3c6b4, [side * 7.9, 3.6, 6.7], [.65, 7.2, .5]);
     }
-    box(chunk, 0xdfe0cd, [0, 6.4, 6.7], [17, .38, .6]);
-    box(chunk, 0xfff3ce, [0, 6.15, 6.65], [3.7, .06, .35]);
     if (i % 2 === 0) {
-      const sign = label(i % 4 ? 'TAKE A BREAK ☕' : 'EXIT  →'); sign.position.set(0, 4.65, -5); sign.scale.set(2.1, .53, 1); chunk.add(sign);
-      for (const x of [-.8, .8]) box(chunk, 0x66796a, [x, 5.5, -5], [.025, 1.3, .025]);
+      const side = i % 4 ? -1 : 1;
+      const sign = label(i % 4 ? 'TAKE A BREAK ☕' : 'EXIT  →'); sign.position.set(side * 8.35, 4.9, -2); sign.rotation.y = -side * Math.PI / 2; sign.scale.set(2.1, .53, 1); chunk.add(sign);
     }
     // Warm pools of afternoon sunlight on the floor.
     const lightMat = new THREE.MeshBasicMaterial({ color: 0xffe8b0, transparent: true, opacity: .12, depthWrite: false }); extraMaterials.push(lightMat);
@@ -159,7 +158,7 @@ export function createScene(container) {
   function render(g, elapsed, dt) {
     const running = g.phase === 'running'; const ready = g.phase === 'ready';
     const travel = ready ? elapsed * 1.6 : g.distance;
-    ceilings.forEach(ceiling => { ceiling.visible = !ready; });
+    ceiling.visible = !ready;
     chunks.forEach((c, i) => { c.position.z = 18 - ((i * 14 + 18 - travel % 140 + 140) % 140); });
     const activeIds = new Set(g.objects.map(o => o.id));
     if (g.phase === 'running' && previousPhase !== 'running' && g.distance < 1) { for (const mesh of objects.values()) scene.remove(mesh); objects.clear(); }
